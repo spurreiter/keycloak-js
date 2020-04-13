@@ -18,8 +18,8 @@
 /* eslint eqeqeq:0, no-proto:0, no-throw-literal:0 */
 /* global universalLinks */
 
-var sha256Imported = require('js-sha256')
-var base64jsImported = require('base64-js')
+var sha256Imported = null
+var base64jsImported = null
 
 module.exports = factory()
 
@@ -1692,6 +1692,12 @@ function factory () {
         }
       }
     }
+  }
+
+  // @spurreiter
+  Keycloak.injectPkce = function (sha256, base64) {
+    sha256Imported = sha256
+    base64jsImported = base64
   }
 
   return Keycloak

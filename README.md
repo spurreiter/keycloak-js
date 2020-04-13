@@ -2,12 +2,22 @@
 
 This is a linted version of package [keycloak-js][] with documentation for API methods.
 
-Has removed the minified versions for "base64-js", js-sha256" and a Promise polyfill.
+The minified versions for "base64-js", js-sha256" and a Promise polyfill have been removed to lower bundle size.
 
 ## Usage
 
 ```
 npm i @spurreiter/keycloak-js
+```
+
+```js
+import Keycloak from '@spurreiter/keycloak-js'
+```
+
+Using with `initOptions.pkceMethod = 'S256'`
+
+```js
+import Keycloak from '@spurreiter/keycloak-js/keycloak-pkce'
 ```
 
 ## License
