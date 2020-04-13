@@ -1,0 +1,16 @@
+{
+  "name": "@spurreiter/keycloak-js",
+  "version": "1.0.0-0",
+  "description": "",
+  "keywords": [],
+  "license": "Apache2",
+  "author": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "keycloak-js": "^9.0.2",
+    "shelljs": "^0.8.3"
+  }
+}
