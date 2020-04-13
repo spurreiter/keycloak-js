@@ -113,19 +113,21 @@ function factory () {
      * @param {string} [initOptions.token] - accessToken
      * @param {string} [initOptions.refreshToken] - refreshToken
      * @param {string} [initOptions.idToken] - idToken
-     * @param {string|object} [initOptions.adapter] - one of ['default', 'cordova', 'cordova-native']
+     * @param {string|object} [initOptions.adapter=default] - one of ['default', 'cordova', 'cordova-native']
      * @param {boolean} [initOptions.useNonce=true]
      * @param {boolean} [initOptions.checkLoginIframe=true] - use iframe to check session
      * @param {number} [initOptions.checkLoginIframeInterval=5] - check login interval in seconds
-     * @param {string} [initOptions.onLoad] - set 'login-required' if login is required
+     * @param {string} [initOptions.onLoad] - one of ['check-sso', 'login-required', undefined] set 'login-required' if login is required
      * @param {string} [initOptions.responseMode='fragment'] - 'query' or 'fragment'
      * @param {string} [initOptions.flow] - 'standard', 'implicit', 'hybrid'
      * @param {string} [initOptions.timeSkew=0] - initial time skew
      * @param {string} [initOptions.redirectUri] - redirect url
+     * @param {string} [initOptions.minValidity=5] - min. validity of token in seconds before token update is triggered
      */
     kc.init = function (initOptions) {
       kc.authenticated = false
       kc.timeSkew = 0 // @spurreiter initialize with 0 to calc initial timeSkew
+      kc.minValidity = 5 // @spurreiter
 
       callbackStorage = createCallbackStorage()
       var adapters = ['default', 'cordova', 'cordova-native']
@@ -209,6 +211,11 @@ function factory () {
           kc.enableLogging = initOptions.enableLogging
         } else {
           kc.enableLogging = false
+        }
+
+        // @spurreiter needs to be number
+        if (typeof initOptions.minValidity === 'number' && initOptions.minutes > 0) {
+          kc.minValidity = initOptions.minValidity
         }
       }
 
@@ -655,7 +662,7 @@ function factory () {
         return promise.promise
       }
 
-      minValidity = minValidity || 5
+      minValidity = minValidity || kc.minValidity
 
       var exec = function () {
         var refreshToken = false
@@ -1032,7 +1039,9 @@ function factory () {
           logInfo('[KEYCLOAK] Estimated time difference between browser and server is ' + kc.timeSkew + ' seconds')
 
           if (kc.onTokenExpired) {
-            var expiresIn = (kc.tokenParsed.exp - (new Date().getTime() / 1000) + kc.timeSkew) * 1000
+            // @spurreiter time of token update shall not be the same as expiry.
+            var validity = kc.timeSkew - kc.minValidity
+            var expiresIn = (kc.tokenParsed.exp - (new Date().getTime() / 1000) + validity) * 1000
             logInfo('[KEYCLOAK] Token expires in ' + Math.round(expiresIn / 1000) + ' s')
             if (expiresIn <= 0) {
               kc.onTokenExpired()
