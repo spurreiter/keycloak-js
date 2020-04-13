@@ -69,6 +69,17 @@ function factory () {
     return toKeycloakPromise(promise)
   }
 
+  /**
+   * Keycloak OIDC Client
+   * @param {string|object} [config='keycloak.json'] - keycloak.json url
+   * @param {string} config.clientId - clientId
+   * @param {object} config.credentials
+   * @param {string} config.credentials.secret - clientId's secret
+   * @param {string|object} config.oidcProvider
+   * @param {string} config.url - authServerUrl
+   * @param {string} config.realm
+   * @return {Keycloak} this
+   */
   function Keycloak (config) {
     if (!(this instanceof Keycloak)) {
       return new Keycloak(config)
@@ -96,8 +107,25 @@ function factory () {
     var logInfo = createLogger(console.info)
     var logWarn = createLogger(console.warn)
 
+    /**
+     * Initialization
+     * @param {object} initOptions
+     * @param {string} [initOptions.token] - accessToken
+     * @param {string} [initOptions.refreshToken] - refreshToken
+     * @param {string} [initOptions.idToken] - idToken
+     * @param {string|object} [initOptions.adapter] - one of ['default', 'cordova', 'cordova-native']
+     * @param {boolean} [initOptions.useNonce=true]
+     * @param {boolean} [initOptions.checkLoginIframe=true] - use iframe to check session
+     * @param {number} [initOptions.checkLoginIframeInterval=5] - check login interval in seconds
+     * @param {string} [initOptions.onLoad] - set 'login-required' if login is required
+     * @param {string} [initOptions.responseMode='fragment'] - 'query' or 'fragment'
+     * @param {string} [initOptions.flow] - 'standard', 'implicit', 'hybrid'
+     * @param {string} [initOptions.timeSkew=0] - initial time skew
+     * @param {string} [initOptions.redirectUri] - redirect url
+     */
     kc.init = function (initOptions) {
       kc.authenticated = false
+      kc.timeSkew = 0 // @spurreiter initialize with 0 to calc initial timeSkew
 
       callbackStorage = createCallbackStorage()
       var adapters = ['default', 'cordova', 'cordova-native']
@@ -123,7 +151,8 @@ function factory () {
           loginIframe.enable = initOptions.checkLoginIframe
         }
 
-        if (initOptions.checkLoginIframeInterval) {
+        // @spurreiter needs to be number
+        if (typeof initOptions.checkLoginIframeInterval === 'number') {
           loginIframe.interval = initOptions.checkLoginIframeInterval
         }
 
@@ -156,7 +185,8 @@ function factory () {
           kc.flow = initOptions.flow
         }
 
-        if (initOptions.timeSkew != null) {
+        // @spurreiter needs to be number
+        if (typeof initOptions.timeSkew === 'number') {
           kc.timeSkew = initOptions.timeSkew
         }
 
@@ -378,6 +408,16 @@ function factory () {
       }
     }
 
+    /**
+     * @param {object} [options]
+     * @param {string} [options.redirectUri]
+     * @param {string} [options.prompt]
+     * @param {string} [options.scope]
+     * @param {string} [options.maxAge]
+     * @param {string} [options.loginHint]
+     * @param {string} [options.idpHint]
+     * @param {string} [options.locale]
+     */
     kc.createLoginUrl = function (options) {
       var state = createUUID()
       var nonce = createUUID()
@@ -456,10 +496,18 @@ function factory () {
       return url
     }
 
+    /**
+     * @param {object} [options]
+     * @param {string} [options.redirectUri]
+     */
     kc.logout = function (options) {
       return adapter.logout(options)
     }
 
+    /**
+     * @param {object} [options]
+     * @param {string} [options.redirectUri]
+     */
     kc.createLogoutUrl = function (options) {
       var url = kc.endpoints.logout() +
                 '?redirect_uri=' + encodeURIComponent(adapter.redirectUri(options, false))
@@ -467,10 +515,20 @@ function factory () {
       return url
     }
 
+    /**
+     * @param {object} [options]
+     * @param {string} [options.redirectUri]
+     * @param {string} [options.prompt] - cordova ('none')
+     */
     kc.register = function (options) {
       return adapter.register(options)
     }
 
+    /**
+     * @param {object} [options]
+     * @param {string} [options.redirectUri]
+     * @param {string} [options.prompt] - cordova ('none')
+     */
     kc.createRegisterUrl = function (options) {
       if (!options) {
         options = {}
@@ -479,6 +537,10 @@ function factory () {
       return kc.createLoginUrl(options)
     }
 
+    /**
+     * @param {object} [options]
+     * @param {string} [options.redirectUri]
+     */
     kc.createAccountUrl = function (options) {
       var realm = getRealmUrl()
       var url
@@ -559,6 +621,9 @@ function factory () {
       return promise.promise
     }
 
+    /**
+     * @param {number} [minValidity]
+     */
     kc.isTokenExpired = function (minValidity) {
       if (!kc.tokenParsed || (!kc.refreshToken && kc.flow != 'implicit')) {
         throw 'Not authenticated'
@@ -579,6 +644,9 @@ function factory () {
       return expiresIn < 0
     }
 
+    /**
+     * @param {number} [minValidity] - if `-1` forced refresh, refreshToken is used to obtain an accessToken
+     */
     kc.updateToken = function (minValidity) {
       var promise = createPromise()
 
@@ -771,6 +839,7 @@ function factory () {
     function loadConfig (url) {
       var promise = createPromise()
       var configUrl
+      var req
 
       if (!config) {
         configUrl = 'keycloak.json'
@@ -838,7 +907,7 @@ function factory () {
       }
 
       if (configUrl) {
-        var req = new XMLHttpRequest()
+        req = new XMLHttpRequest()
         req.open('GET', configUrl, true)
         req.setRequestHeader('Accept', 'application/json')
 
