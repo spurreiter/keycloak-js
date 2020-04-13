@@ -1,10 +1,13 @@
 {
   "name": "@spurreiter/keycloak-js",
   "version": "1.0.0-0",
-  "description": "",
-  "keywords": [],
-  "license": "Apache2",
-  "author": "",
+  "description": "linted keycloak oidc client",
+  "keywords": [
+    "keycloak",
+    "oidc",
+    "oidc-client"
+  ],
+  "license": "Apache-2.0",
   "main": "src/keycloak.js",
   "scripts": {
     "lint": "eslint --fix \"**/*.js\"",
@@ -23,5 +26,8 @@
     "eslint-plugin-standard": "^4.0.1",
     "keycloak-js": "^9.0.2",
     "shelljs": "^0.8.3"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
