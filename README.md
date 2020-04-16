@@ -1,6 +1,6 @@
 # keycloak-js
 
-This is a linted version of package [keycloak-js][] with documentation for API methods.
+This is a linted version of package [keycloak-js][] with documentation for API methods. The original code is located [here](https://github.com/keycloak/keycloak/tree/master/adapters/oidc/js/src/main/resources).
 
 The minified versions for "base64-js", js-sha256" and a Promise polyfill have been removed to lower bundle size.
 
@@ -25,3 +25,5 @@ import Keycloak from '@spurreiter/keycloak-js/keycloak-pkce'
 Apache 2.0 as with the original package
 
 [keycloak-js]: https://npmjs.org/package/keycloak-js
+
+

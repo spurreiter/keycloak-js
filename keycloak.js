@@ -486,6 +486,10 @@ function factory () {
         url += '&kc_idp_hint=' + encodeURIComponent(options.idpHint)
       }
 
+      if (options && options.action && options.action != 'register') {
+        url += '&kc_action=' + encodeURIComponent(options.action)
+      }
+
       if (options && options.locale) {
         url += '&ui_locales=' + encodeURIComponent(options.locale)
       }
@@ -662,6 +666,7 @@ function factory () {
         return promise.promise
       }
 
+      // @spurreiter use global minValidity
       minValidity = minValidity || kc.minValidity
 
       var exec = function () {
@@ -776,6 +781,10 @@ function factory () {
       var prompt = oauth.prompt
 
       var timeLocal = new Date().getTime()
+
+      if (oauth.kc_action_status) {
+        kc.onActionUpdate && kc.onActionUpdate(oauth.kc_action_status)
+      }
 
       if (error) {
         if (prompt != 'none') {
@@ -1078,8 +1087,10 @@ function factory () {
         default:
           throw 'Invalid token'
       }
-
-      str = decodeURIComponent(escape(atob(str)))
+    
+      // @spurreiter duplicated code was removed
+ 
+     str = decodeURIComponent(escape(atob(str)))
 
       str = JSON.parse(str)
       return str
@@ -1118,13 +1129,13 @@ function factory () {
       var supportedParams
       switch (kc.flow) {
         case 'standard':
-          supportedParams = ['code', 'state', 'session_state']
+          supportedParams = ['code', 'state', 'session_state', 'kc_action_status']
           break
         case 'implicit':
-          supportedParams = ['access_token', 'token_type', 'id_token', 'state', 'session_state', 'expires_in']
+          supportedParams = ['access_token', 'token_type', 'id_token', 'state', 'session_state', 'expires_in', 'kc_action_status']
           break
         case 'hybrid':
-          supportedParams = ['access_token', 'id_token', 'code', 'state', 'session_state']
+          supportedParams = ['access_token', 'id_token', 'code', 'state', 'session_state', 'kc_action_status']
           break
       }
 
@@ -1711,3 +1722,4 @@ function factory () {
 
   return Keycloak
 }
+
