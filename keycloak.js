@@ -680,6 +680,7 @@ function factory () {
         }
 
         if (!refreshToken) {
+          setToken(kc.token) // @spurreiter restart timer to call onTokenExpired() the next time
           promise.setSuccess(false)
         } else {
           var params = 'grant_type=refresh_token&' + 'refresh_token=' + kc.refreshToken
@@ -1087,10 +1088,9 @@ function factory () {
         default:
           throw 'Invalid token'
       }
-    
+
       // @spurreiter duplicated code was removed
- 
-     str = decodeURIComponent(escape(atob(str)))
+      str = decodeURIComponent(escape(atob(str)))
 
       str = JSON.parse(str)
       return str
@@ -1722,4 +1722,3 @@ function factory () {
 
   return Keycloak
 }
-
