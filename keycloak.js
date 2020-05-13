@@ -214,7 +214,7 @@ function factory () {
         }
 
         // @change needs to be number
-        if (typeof initOptions.minValidity === 'number' && initOptions.minutes > 0) {
+        if (typeof initOptions.minValidity === 'number' && initOptions.minValidity > 0) {
           kc.minValidity = initOptions.minValidity
         }
       }
@@ -1050,7 +1050,11 @@ function factory () {
 
           if (kc.onTokenExpired) {
             // @change time of token update shall not be the same as expiry.
-            var validity = kc.timeSkew - kc.minValidity
+            // if we get closer to session expiry minValidity shall not be considered
+            // to avoid constant forced token refresh by looping in ms
+            var validity = (kc.tokenParsed.exp - kc.tokenParsed.iat) > kc.minValidity
+              ? kc.timeSkew - kc.minValidity
+              : kc.timeSkew
             var expiresIn = (kc.tokenParsed.exp - (new Date().getTime() / 1000) + validity) * 1000
             logInfo('[KEYCLOAK] Token expires in ' + Math.round(expiresIn / 1000) + ' s')
             if (expiresIn <= 0) {
