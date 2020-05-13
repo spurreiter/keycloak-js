@@ -1047,9 +1047,6 @@
           throw 'Invalid token'
       }
 
-      str = (str + '===').slice(0, str.length + (str.length % 4))
-      str = str.replace(/-/g, '+').replace(/_/g, '/')
-
       str = decodeURIComponent(escape(atob(str)))
 
       str = JSON.parse(str)
