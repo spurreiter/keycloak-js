@@ -1095,7 +1095,6 @@ function factory () {
           throw 'Invalid token'
       }
 
-      // @change duplicated code was removed
       str = decodeURIComponent(escape(atob(str)))
 
       str = JSON.parse(str)
