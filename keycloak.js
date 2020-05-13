@@ -126,8 +126,8 @@ function factory () {
      */
     kc.init = function (initOptions) {
       kc.authenticated = false
-      kc.timeSkew = 0 // @spurreiter initialize with 0 to calc initial timeSkew
-      kc.minValidity = 5 // @spurreiter
+      kc.timeSkew = 0 // @change initialize with 0 to calc initial timeSkew
+      kc.minValidity = 5 // @change set global minValidity
 
       callbackStorage = createCallbackStorage()
       var adapters = ['default', 'cordova', 'cordova-native']
@@ -153,7 +153,7 @@ function factory () {
           loginIframe.enable = initOptions.checkLoginIframe
         }
 
-        // @spurreiter needs to be number
+        // @change ensure it's a number
         if (typeof initOptions.checkLoginIframeInterval === 'number') {
           loginIframe.interval = initOptions.checkLoginIframeInterval
         }
@@ -187,7 +187,7 @@ function factory () {
           kc.flow = initOptions.flow
         }
 
-        // @spurreiter needs to be number
+        // @change ensure it's a number
         if (typeof initOptions.timeSkew === 'number') {
           kc.timeSkew = initOptions.timeSkew
         }
@@ -213,7 +213,7 @@ function factory () {
           kc.enableLogging = false
         }
 
-        // @spurreiter needs to be number
+        // @change needs to be number
         if (typeof initOptions.minValidity === 'number' && initOptions.minutes > 0) {
           kc.minValidity = initOptions.minValidity
         }
@@ -666,7 +666,7 @@ function factory () {
         return promise.promise
       }
 
-      // @spurreiter use global minValidity
+      // @change use global minValidity
       minValidity = minValidity || kc.minValidity
 
       var exec = function () {
@@ -680,7 +680,7 @@ function factory () {
         }
 
         if (!refreshToken) {
-          setToken(kc.token) // @spurreiter restart timer to call onTokenExpired() the next time
+          if (!kc.tokenTimeoutHandle) setToken(kc.token) // @change restart timer to call onTokenExpired() the next time
           promise.setSuccess(false)
         } else {
           var params = 'grant_type=refresh_token&' + 'refresh_token=' + kc.refreshToken
@@ -1049,14 +1049,17 @@ function factory () {
           logInfo('[KEYCLOAK] Estimated time difference between browser and server is ' + kc.timeSkew + ' seconds')
 
           if (kc.onTokenExpired) {
-            // @spurreiter time of token update shall not be the same as expiry.
+            // @change time of token update shall not be the same as expiry.
             var validity = kc.timeSkew - kc.minValidity
             var expiresIn = (kc.tokenParsed.exp - (new Date().getTime() / 1000) + validity) * 1000
             logInfo('[KEYCLOAK] Token expires in ' + Math.round(expiresIn / 1000) + ' s')
             if (expiresIn <= 0) {
               kc.onTokenExpired()
             } else {
-              kc.tokenTimeoutHandle = setTimeout(kc.onTokenExpired, expiresIn)
+              kc.tokenTimeoutHandle = setTimeout(function () {
+                kc.tokenTimeoutHandle = null // @change unset handle to allow timer restart in updateToken
+                kc.onTokenExpired()
+              }, expiresIn)
             }
           }
         }
@@ -1089,7 +1092,7 @@ function factory () {
           throw 'Invalid token'
       }
 
-      // @spurreiter duplicated code was removed
+      // @change duplicated code was removed
       str = decodeURIComponent(escape(atob(str)))
 
       str = JSON.parse(str)
@@ -1714,7 +1717,7 @@ function factory () {
     }
   }
 
-  // @spurreiter
+  // @change inject pkce if needed
   Keycloak.injectPkce = function (sha256, base64) {
     sha256Imported = sha256
     base64jsImported = base64
