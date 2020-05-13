@@ -113,7 +113,7 @@ function factory () {
      * @param {string} [initOptions.token] - accessToken
      * @param {string} [initOptions.refreshToken] - refreshToken
      * @param {string} [initOptions.idToken] - idToken
-     * @param {string|object} [initOptions.adapter=default] - one of ['default', 'cordova', 'cordova-native']
+     * @param {string|object} [initOptions.adapter=default] - one of ['default', 'cordova', 'cordova-native', 'custom']
      * @param {boolean} [initOptions.useNonce=true]
      * @param {boolean} [initOptions.checkLoginIframe=true] - use iframe to check session
      * @param {number} [initOptions.checkLoginIframeInterval=5] - check login interval in seconds
@@ -130,7 +130,7 @@ function factory () {
       kc.minValidity = 5 // @change set global minValidity
 
       callbackStorage = createCallbackStorage()
-      var adapters = ['default', 'cordova', 'cordova-native']
+      var adapters = ['default', 'cordova', 'cordova-native', 'custom']
 
       if (initOptions && adapters.indexOf(initOptions.adapter) > -1) {
         adapter = loadAdapter(initOptions.adapter)
@@ -522,7 +522,6 @@ function factory () {
     kc.createLogoutUrl = function (options) {
       var url = kc.endpoints.logout() +
                 '?redirect_uri=' + encodeURIComponent(adapter.redirectUri(options, false))
-
       return url
     }
 
@@ -1588,6 +1587,11 @@ function factory () {
             }
           }
         }
+      }
+
+      // @change allow custom adapter
+      if (type === 'custom' && kc.customAdapter) {
+        return kc.customAdapter
       }
 
       throw 'invalid adapter type: ' + type
