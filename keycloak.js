@@ -123,6 +123,8 @@ function factory () {
      * @param {string} [initOptions.timeSkew=0] - initial time skew
      * @param {string} [initOptions.redirectUri] - redirect url
      * @param {string} [initOptions.minValidity=5] - min. validity of token in seconds before token update is triggered
+     * @param {string} [initOptions.silentCheckSsoRedirectUri] - redirect Uri overwrite for silent check-sso mode
+     * @param {boolean} [initOptions.check3pCookies=false] - check for enabled 3rd party cookies - requires endpoint `3p-cookies/step1.html`
      * @param {boolean} [initOptions.silentCheckSsoFallback=true] - silent check-sso, requires 3rd party cookies enabled in browser
      */
     kc.init = function (initOptions) {
@@ -363,12 +365,16 @@ function factory () {
         }
       }
 
-      configPromise.then(function () {
-        check3pCookiesSupported().then(processInit)
-          .catch(function () {
-            promise.setError()
-          })
-      })
+      if (initOptions.check3pCookies) {
+        configPromise.then(function () {
+          check3pCookiesSupported().then(processInit)
+            .catch(function () {
+              promise.setError()
+            })
+        })
+      } else {
+        configPromise.then(processInit)
+      }
       configPromise.catch(function () {
         promise.setError()
       })
