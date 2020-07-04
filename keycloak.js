@@ -123,6 +123,7 @@ function factory () {
      * @param {string} [initOptions.timeSkew=0] - initial time skew
      * @param {string} [initOptions.redirectUri] - redirect url
      * @param {string} [initOptions.minValidity=5] - min. validity of token in seconds before token update is triggered
+     * @param {boolean} [initOptions.silentCheckSsoFallback=true] - silent check-sso, requires 3rd party cookies enabled in browser
      */
     kc.init = function (initOptions) {
       kc.authenticated = false
@@ -198,6 +199,12 @@ function factory () {
 
         if (initOptions.silentCheckSsoRedirectUri) {
           kc.silentCheckSsoRedirectUri = initOptions.silentCheckSsoRedirectUri
+        }
+
+        if (typeof initOptions.silentCheckSsoFallback === 'boolean') {
+          kc.silentCheckSsoFallback = initOptions.silentCheckSsoFallback
+        } else {
+          kc.silentCheckSsoFallback = true
         }
 
         if (initOptions.pkceMethod) {
@@ -356,7 +363,12 @@ function factory () {
         }
       }
 
-      configPromise.then(processInit)
+      configPromise.then(function () {
+        check3pCookiesSupported().then(processInit)
+          .catch(function () {
+            promise.setError()
+          })
+      })
       configPromise.catch(function () {
         promise.setError()
       })
@@ -882,6 +894,13 @@ function factory () {
               }
               return src
             },
+            thirdPartyCookiesIframe: function () {
+              var src = getRealmUrl() + '/protocol/openid-connect/3p-cookies/step1.html'
+              if (kc.iframeVersion) {
+                src = src + '?version=' + kc.iframeVersion
+              }
+              return src
+            },
             register: function () {
               return getRealmUrl() + '/protocol/openid-connect/registrations'
             },
@@ -1312,6 +1331,45 @@ function factory () {
         if (loginIframe.callbackList.length == 1) {
           loginIframe.iframe.contentWindow.postMessage(msg, origin)
         }
+      } else {
+        promise.setSuccess()
+      }
+
+      return promise.promise
+    }
+
+    function check3pCookiesSupported () {
+      var promise = createPromise()
+
+      if (loginIframe.enable || kc.silentCheckSsoRedirectUri) {
+        var iframe = document.createElement('iframe')
+        iframe.setAttribute('src', kc.endpoints.thirdPartyCookiesIframe())
+        iframe.setAttribute('title', 'keycloak-3p-check-iframe')
+        iframe.style.display = 'none'
+        document.body.appendChild(iframe)
+
+        var messageCallback = function (event) {
+          if (iframe.contentWindow !== event.source) {
+            return
+          }
+
+          if (event.data !== 'supported' && event.data !== 'unsupported') {
+            promise.setError()
+          } else if (event.data === 'unsupported') {
+            loginIframe.enable = false
+            if (kc.silentCheckSsoFallback) {
+              kc.silentCheckSsoRedirectUri = false
+            }
+            logWarn("[KEYCLOAK] 3rd party cookies aren't supported by this browser. checkLoginIframe and " +
+                            'silent check-sso are not available.')
+          }
+
+          document.body.removeChild(iframe)
+          window.removeEventListener('message', messageCallback)
+          promise.setSuccess()
+        }
+
+        window.addEventListener('message', messageCallback, false)
       } else {
         promise.setSuccess()
       }
