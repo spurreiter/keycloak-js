@@ -11,15 +11,15 @@ const tasks = {}
 
 tasks.checkout = async () => {
   cd(dir)
-  exec('git checkout -b keycloak')
+  exec('git checkout keycloak')
 }
 
 tasks.module = async () => {
   await tasks.checkout()
   cd(dir)
+  rm('-r', 'node_modules/keycloak-js')
   exec('npm i')
   cp(`${srcDir}/dist/keycloak.js`, `${dir}`)
-  await tasks.lint()
 }
 
 tasks.fetch = async () => {
@@ -30,11 +30,6 @@ tasks.fetch = async () => {
     if (!res.ok) throw new Error(`unexpected response ${res.statusText}`)
     return streamPipeline(res.body, fs.createWriteStream(`${dir}/keycloak.js`))
   })
-  await tasks.lint()
-}
-
-tasks.lint = async () => {
-  exec('npm run lint')
 }
 
 ;(async () => {
